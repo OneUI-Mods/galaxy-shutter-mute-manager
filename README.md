@@ -1,91 +1,32 @@
 # Galaxy Shutter Mute Manager
 
-<p align="center">
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg">
-  <img alt="Android" src="https://img.shields.io/badge/Android-9.0%2B-green.svg">
-  <img alt="OneUI" src="https://img.shields.io/badge/OneUI-1.0%20~%208.5-blue.svg">
-</p>
-
-[Galaxy Shutter Mute](https://github.com/ryuya0124/galaxy-shutter-mute) のインストーラー兼アップデーターアプリです。
-
-## 概要
-
-Galaxy Shutter Mute は `targetSdkVersion=21` のため、Android 14 以降では通常の方法でインストールできません。  
-このManagerアプリが代わりに以下を自動で行います：
-
-1. GitHub Releases から最新の APK をダウンロード
-2. `pm install --bypass-low-target-sdk-block` でインストール
-3. `WRITE_SECURE_SETTINGS` 権限を自動付与
-
-## 動作確認済み環境
-
-- **OneUI 1.0 〜 OneUI 8.5** (Android 9.0 〜 Android 16)
+[Galaxy Shutter Mute](https://github.com/OneUI-Mods/galaxy-shutter-mute)の導入・更新と、必要な権限の付与を行うアプリです。
 
 ## 必要なもの
 
-- **[Shizuku](https://shizuku.rikka.app/)** アプリ
+- 対応するSamsung Galaxy端末。
+- 起動済みの[Shizuku](https://shizuku.rikka.app/)と、Managerへのアクセス許可。
+- 配布APKを取得するためのインターネット接続。
 
-## インストール方法
-
-1. [リリースページ](https://github.com/ryuya0124/galaxy-shutter-mute-manager/releases/latest) から `galaxy-shutter-mute-manager.apk` をダウンロード
-2. 通常の方法でインストール（targetSdk 制限なし）
-3. アプリを起動して Shizuku の認証を許可
+ManagerのインストールにはAndroid 8以降が必要です。本体のシャッター音設定が利用できるかどうかは端末・カメラのバージョンにも依存します。従来の確認範囲はAndroid 16 / One UI 8.5までで、Android 17の動作確認をこの更新で追加したものではありません。
 
 ## 使い方
 
-### Galaxy Shutter Mute のインストール
+1. [Releases](https://github.com/OneUI-Mods/galaxy-shutter-mute-manager/releases)からManagerのrelease APKをインストールします。
+2. Shizukuを起動してManagerの認証を許可します。
+3. Managerを開き、「インストール」または「アップデート」を押します。
+4. 導入後にGalaxy Shutter Muteを開き、シャッター音を設定します。
 
-1. Manager アプリを起動
-2. 最新リリース情報が自動で表示されます
-3. 「インストール」ボタンをタップ
-4. ダウンロード・インストール・権限付与が自動で完了します
+本体の新しい版がある場合は更新ボタンを表示します。設定画面から配布先を変更することもできます。標準の配布先はOneUI Modsです。旧URLからもGitHubの転送で到達できます。
 
-### アップデート
+## 制限
 
-アプリを起動すると現在インストール済みのバージョンと最新バージョンが比較されます。  
-新しいバージョンがある場合は「アップデート」ボタンが表示されます。
+Manager自身がカメラのシャッター音を切り替えるわけではありません。本体のインストールと権限設定を支援します。Shizukuが停止している場合は、起動し直してから操作してください。
 
-### カスタム GitHub Releases URL の設定
+## 開発者向け・ライセンス
 
-設定画面（⚙️アイコン）から GitHub Releases API の URL を変更できます。  
-フォークしたリポジトリや自己ホストの配布先にも対応しています。
+ビルド、内部構造、検証方法は[開発者向けガイド](docs/development.md)に分けています。不具合報告は[Issues](https://github.com/OneUI-Mods/galaxy-shutter-mute-manager/issues)へ、端末・OS・対象アプリの版と再現手順を添えてください。
 
-**デフォルト URL:**
-```
-https://api.github.com/repos/ryuya0124/galaxy-shutter-mute/releases/latest
-```
+本体のライセンスは[LICENSE](LICENSE)、依存ライブラリの表記はアプリ内または同梱の第三者ライセンスを参照してください。Samsungの公式アプリではありません。
 
-## Galaxy Shutter Mute との連携
-
-```
-Manager                          Galaxy Shutter Mute
-  │                                      │
-  ├─ GitHub Releases API で最新APK取得    │
-  ├─ Shizuku経由 pm install              │
-  ├─ Shizuku経由 pm grant ──────────────>│ WRITE_SECURE_SETTINGS 付与
-  │                                      │
-  │                                      └─ Settings.System でシャッター音制御
-```
-
-| 機能 | Manager | Shutter Mute |
-|---|---|---|
-| インストール / アップデート | ✅ | — |
-| `WRITE_SECURE_SETTINGS` 付与 | ✅ 自動 | — |
-| シャッター音 ON/OFF | — | ✅ |
-| GitHub Releases URL 設定 | ✅ | — |
-
-## 技術スタック
-
-- **Kotlin** / **Jetpack Compose** / **Material 3**
-- **Shizuku API** 13.1.5
-- **Retrofit2** / **OkHttp** （GitHub Releases API 通信）
-- **DataStore**（設定の永続化）
-- `targetSdkVersion=35`
-
-## パッケージ名
-
-`net.ryuya.dev.galaxyshutter.mute.manager`
-
-## ライセンス
-
-MIT License
+[OneUI Modsのアプリ一覧](https://github.com/OneUI-Mods)
