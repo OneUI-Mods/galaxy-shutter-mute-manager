@@ -4,7 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.Loca                                                                                                                                                                                                                                                                                                                                                           lContext
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
@@ -12,10 +12,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import net.ryuya.dev.galaxyshutter.mute.manager.ui.theme.ManagerTheme
 
-/**
- * Manager アプリのルート Composable
- * 画面ナビゲーション（メイン ↔ 設定）を管理する
- */
+/** Manager アプリのルート Composable 画面ナビゲーション（メイン ↔ 設定）を管理する */
 @Composable
 fun ManagerApp() {
     val context = LocalContext.current
@@ -42,15 +39,16 @@ fun ManagerApp() {
     ManagerTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             when (currentScreen) {
-                Screen.Main -> MainScreen(
-                    uiState = uiState,
-                    onInstall = viewModel::installOrUpdate,
-                    onInstallLocalApk = viewModel::installLocalApk,
-                    onGrantPermissionOnly = viewModel::grantPermissionOnly,
-                    onRefresh = viewModel::checkShizukuAndFetch,
-                    onRequestShizukuPermission = viewModel::requestShizukuPermission,
-                    onNavigateToSettings = { currentScreen = Screen.Settings }
-                )
+                Screen.Main ->
+                    MainScreen(
+                        uiState = uiState,
+                        onInstall = viewModel::installOrUpdate,
+                        onInstallLocalApk = viewModel::installLocalApk,
+                        onGrantPermissionOnly = viewModel::grantPermissionOnly,
+                        onRefresh = viewModel::checkShizukuAndFetch,
+                        onRequestShizukuPermission = viewModel::requestShizukuPermission,
+                        onNavigateToSettings = { currentScreen = Screen.Settings },
+                    )
                 Screen.Settings -> {
                     BackHandler {
                         currentScreen = Screen.Main
@@ -62,7 +60,7 @@ fun ManagerApp() {
                             currentScreen = Screen.Main
                             viewModel.fetchLatestRelease()
                         },
-                        onBack = { currentScreen = Screen.Main }
+                        onBack = { currentScreen = Screen.Main },
                     )
                 }
             }
@@ -73,5 +71,5 @@ fun ManagerApp() {
 /** アプリ内の画面を表す enum */
 private enum class Screen {
     Main,
-    Settings
+    Settings,
 }
