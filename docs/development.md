@@ -19,3 +19,8 @@ Android SDKのコンパイル対象は37です。JDK・Gradle・依存関係の�
 ## ドキュメント一覧
 
 - [実装と過去の検証の補足](architecture-and-validation.md)
+
+## 2026-10-30のビルド確認
+
+Android実装は元からKotlinです。固定されていたGradle版のwrapper一式を追加し、releaseビルドとlintを確認しました。壊れていたLocalContextのimportを修正しました。
+端末上の画面操作・音声操作は実施していません。SDK・設定・署名の識別は変更しません。
