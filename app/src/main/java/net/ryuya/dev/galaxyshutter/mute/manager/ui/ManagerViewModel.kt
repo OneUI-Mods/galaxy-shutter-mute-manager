@@ -19,25 +19,25 @@ import net.ryuya.dev.galaxyshutter.mute.manager.installer.ShizukuInstaller
 import net.ryuya.dev.galaxyshutter.mute.manager.shizuku.ShizukuHelper
 import rikka.shizuku.Shizuku
 
-/**
- * Manager アプリのメイン画面 ViewModel
- * インストール・アップデート・設定保存を管理する
- */
-class ManagerViewModel(private val context: Context) : ViewModel() {
+/** Manager アプリのメイン画面 ViewModel インストール・アップデート・設定保存を管理する */
+class ManagerViewModel(context: Context) : ViewModel() {
 
-    private val preferencesRepository = PreferencesRepository(context)
-    private val releaseRepository = GitHubReleaseRepository(context, preferencesRepository)
+    private val context = context.applicationContext
+
+    private val preferencesRepository = PreferencesRepository(this.context)
+    private val releaseRepository = GitHubReleaseRepository(this.context, preferencesRepository)
 
     /** 画面 UI 状態 */
     private val _uiState = MutableStateFlow(ManagerUiState())
     val uiState = _uiState.asStateFlow()
 
-    /** 設定 URL の Flow（DataStore から）*/
-    val releasesUrl = preferencesRepository.releasesUrl.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5_000),
-        PreferencesRepository.DEFAULT_RELEASES_URL
-    )
+    /** 設定 URL の Flow（DataStore から） */
+    val releasesUrl =
+        preferencesRepository.releasesUrl.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            PreferencesRepository.DEFAULT_RELEASES_URL,
+        )
 
     /** Shizuku 権限結果コールバック */
     private val shizukuPermissionListener =
@@ -59,16 +59,15 @@ class ManagerViewModel(private val context: Context) : ViewModel() {
         Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener)
     }
 
-    /**
-     * Shizuku 状態を確認してから最新リリース情報を取得する
-     */
+    /** Shizuku 状態を確認してから最新リリース情報を取得する */
     fun checkShizukuAndFetch() {
         viewModelScope.launch {
-            val shizukuState = when {
-                !ShizukuHelper.isShizukuAvailable() -> ShizukuState.NotRunning
-                !ShizukuHelper.hasShizukuPermission() -> ShizukuState.PermissionRequired
-                else -> ShizukuState.Ready
-            }
+            val shizukuState =
+                when {
+                    !ShizukuHelper.isShizukuAvailable() -> ShizukuState.NotRunning
+                    !ShizukuHelper.hasShizukuPermission() -> ShizukuState.PermissionRequired
+                    else -> ShizukuState.Ready
+                }
             _uiState.update { it.copy(shizukuState = shizukuState) }
             // Shizukuの状態に関わらず、最新リリース情報は取得する
             fetchLatestRelease()
@@ -80,9 +79,7 @@ class ManagerViewModel(private val context: Context) : ViewModel() {
         ShizukuHelper.requestShizukuPermission()
     }
 
-    /**
-     * GitHub Releases API から最新リリース情報を取得する
-     */
+    /** GitHub Releases API から最新リリース情報を取得する */
     fun fetchLatestRelease() {
         viewModelScope.launch {
             _uiState.update { it.copy(isFetchingRelease = true, fetchError = null) }
@@ -93,33 +90,32 @@ class ManagerViewModel(private val context: Context) : ViewModel() {
                     it.copy(
                         latestRelease = release,
                         installedVersion = installedVersion,
-                        isFetchingRelease = false
+                        isFetchingRelease = false,
                     )
                 }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
                         isFetchingRelease = false,
-                        fetchError = context.getString(net.ryuya.dev.galaxyshutter.mute.manager.R.string.error_fetch_release, e.localizedMessage)
+                        fetchError =
+                            context.getString(
+                                net.ryuya.dev.galaxyshutter.mute.manager.R.string
+                                    .error_fetch_release,
+                                e.localizedMessage,
+                            ),
                     )
                 }
             }
         }
     }
 
-    /**
-     * インストール済みバージョンをローカルで再確認し、UI状態を更新する
-     * （バックグラウンド復帰時や定期ポーリング用）
-     */
+    /** インストール済みバージョンをローカルで再確認し、UI状態を更新する （バックグラウンド復帰時や定期ポーリング用） */
     fun checkInstalledVersion() {
         val installedVersion = releaseRepository.getInstalledVersion()
         _uiState.update { it.copy(installedVersion = installedVersion) }
     }
 
-    /**
-     * APK をダウンロードして Shizuku 経由でインストールし、
-     * WRITE_SECURE_SETTINGS 権限を付与する
-     */
+    /** APK をダウンロードして Shizuku 経由でインストールし、 WRITE_SECURE_SETTINGS 権限を付与する */
     fun installOrUpdate() {
         val release = _uiState.value.latestRelease ?: return
         val apkAsset = release.assets.firstOrNull { it.isApk } ?: return
@@ -128,20 +124,25 @@ class ManagerViewModel(private val context: Context) : ViewModel() {
             _uiState.update {
                 it.copy(
                     installState = InstallState.Downloading(0f),
-                    installError = null
+                    installError = null,
                 )
             }
 
             // APK ダウンロード
-            val apkFile = releaseRepository.downloadApk(apkAsset.downloadUrl) { progress ->
-                _uiState.update { it.copy(installState = InstallState.Downloading(progress)) }
-            }
+            val apkFile =
+                releaseRepository.downloadApk(apkAsset.downloadUrl) { progress ->
+                    _uiState.update { it.copy(installState = InstallState.Downloading(progress)) }
+                }
 
             if (apkFile == null) {
                 _uiState.update {
                     it.copy(
                         installState = InstallState.Idle,
-                        installError = context.getString(net.ryuya.dev.galaxyshutter.mute.manager.R.string.error_download_apk)
+                        installError =
+                            context.getString(
+                                net.ryuya.dev.galaxyshutter.mute.manager.R.string
+                                    .error_download_apk,
+                            ),
                     )
                 }
                 return@launch
@@ -159,7 +160,7 @@ class ManagerViewModel(private val context: Context) : ViewModel() {
                             _uiState.update {
                                 it.copy(
                                     installState = InstallState.Done,
-                                    installedVersion = newInstalledVersion
+                                    installedVersion = newInstalledVersion,
                                 )
                             }
                         }
@@ -167,7 +168,12 @@ class ManagerViewModel(private val context: Context) : ViewModel() {
                             _uiState.update {
                                 it.copy(
                                     installState = InstallState.Idle,
-                                    installError = context.getString(net.ryuya.dev.galaxyshutter.mute.manager.R.string.error_grant_permission, grantResult.message)
+                                    installError =
+                                        context.getString(
+                                            net.ryuya.dev.galaxyshutter.mute.manager.R.string
+                                                .error_grant_permission,
+                                            grantResult.message,
+                                        ),
                                 )
                             }
                         }
@@ -178,7 +184,12 @@ class ManagerViewModel(private val context: Context) : ViewModel() {
                     _uiState.update {
                         it.copy(
                             installState = InstallState.Idle,
-                            installError = context.getString(net.ryuya.dev.galaxyshutter.mute.manager.R.string.error_install_apk, installResult.message)
+                            installError =
+                                context.getString(
+                                    net.ryuya.dev.galaxyshutter.mute.manager.R.string
+                                        .error_install_apk,
+                                    installResult.message,
+                                ),
                         )
                     }
                 }
@@ -193,15 +204,13 @@ class ManagerViewModel(private val context: Context) : ViewModel() {
         }
     }
 
-    /**
-     * ローカルで選択された APK (Uri) をコピーしてインストールする
-     */
+    /** ローカルで選択された APK (Uri) をコピーしてインストールする */
     fun installLocalApk(uri: android.net.Uri) {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
                     installState = InstallState.Installing,
-                    installError = null
+                    installError = null,
                 )
             }
             try {
@@ -210,7 +219,12 @@ class ManagerViewModel(private val context: Context) : ViewModel() {
                     tempApk.outputStream().use { output ->
                         input.copyTo(output)
                     }
-                } ?: throw Exception(context.getString(net.ryuya.dev.galaxyshutter.mute.manager.R.string.error_open_file))
+                }
+                    ?: throw Exception(
+                        context.getString(
+                            net.ryuya.dev.galaxyshutter.mute.manager.R.string.error_open_file,
+                        ),
+                    )
 
                 when (val installResult = ShizukuInstaller.installApk(tempApk)) {
                     is InstallResult.Success -> {
@@ -223,7 +237,12 @@ class ManagerViewModel(private val context: Context) : ViewModel() {
                                 _uiState.update {
                                     it.copy(
                                         installState = InstallState.Idle,
-                                        installError = context.getString(net.ryuya.dev.galaxyshutter.mute.manager.R.string.error_grant_permission, grantResult.message)
+                                        installError =
+                                            context.getString(
+                                                net.ryuya.dev.galaxyshutter.mute.manager.R.string
+                                                    .error_grant_permission,
+                                                grantResult.message,
+                                            ),
                                     )
                                 }
                             }
@@ -234,7 +253,12 @@ class ManagerViewModel(private val context: Context) : ViewModel() {
                         _uiState.update {
                             it.copy(
                                 installState = InstallState.Idle,
-                                installError = context.getString(net.ryuya.dev.galaxyshutter.mute.manager.R.string.error_install_apk, installResult.message)
+                                installError =
+                                    context.getString(
+                                        net.ryuya.dev.galaxyshutter.mute.manager.R.string
+                                            .error_install_apk,
+                                        installResult.message,
+                                    ),
                             )
                         }
                         tempApk.delete()
@@ -244,19 +268,23 @@ class ManagerViewModel(private val context: Context) : ViewModel() {
                 _uiState.update {
                     it.copy(
                         installState = InstallState.Idle,
-                        installError = context.getString(net.ryuya.dev.galaxyshutter.mute.manager.R.string.error_processing, e.localizedMessage)
+                        installError =
+                            context.getString(
+                                net.ryuya.dev.galaxyshutter.mute.manager.R.string.error_processing,
+                                e.localizedMessage,
+                            ),
                     )
                 }
             }
         }
     }
 
-    /**
-     * 権限のみを再付与する
-     */
+    /** 権限のみを再付与する */
     fun grantPermissionOnly() {
         viewModelScope.launch {
-            _uiState.update { it.copy(installState = InstallState.GrantingPermission, installError = null) }
+            _uiState.update {
+                it.copy(installState = InstallState.GrantingPermission, installError = null)
+            }
             when (val grantResult = ShizukuInstaller.grantWriteSecureSettings()) {
                 is InstallResult.Success -> {
                     _uiState.update { it.copy(installState = InstallState.Done) }
@@ -265,7 +293,12 @@ class ManagerViewModel(private val context: Context) : ViewModel() {
                     _uiState.update {
                         it.copy(
                             installState = InstallState.Idle,
-                            installError = context.getString(net.ryuya.dev.galaxyshutter.mute.manager.R.string.error_grant_permission, grantResult.message)
+                            installError =
+                                context.getString(
+                                    net.ryuya.dev.galaxyshutter.mute.manager.R.string
+                                        .error_grant_permission,
+                                    grantResult.message,
+                                ),
                         )
                     }
                 }
@@ -290,23 +323,31 @@ data class ManagerUiState(
     val isFetchingRelease: Boolean = false,
     val fetchError: String? = null,
     val installState: InstallState = InstallState.Idle,
-    val installError: String? = null
+    val installError: String? = null,
 )
 
 /** Shizuku の準備状態 */
 sealed class ShizukuState {
     object Checking : ShizukuState()
+
     object Ready : ShizukuState()
+
     object NotRunning : ShizukuState()
+
     object PermissionRequired : ShizukuState()
+
     object Denied : ShizukuState()
 }
 
 /** インストール処理の進行状態 */
 sealed class InstallState {
     object Idle : InstallState()
+
     data class Downloading(val progress: Float) : InstallState()
+
     object Installing : InstallState()
+
     object GrantingPermission : InstallState()
+
     object Done : InstallState()
 }

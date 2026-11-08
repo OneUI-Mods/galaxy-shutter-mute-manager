@@ -24,3 +24,7 @@ Android SDKのコンパイル対象は37です。JDK・Gradle・依存関係の�
 
 Android実装は元からKotlinです。固定されていたGradle版のwrapper一式を追加し、releaseビルドとlintを確認しました。壊れていたLocalContextのimportを修正しました。
 端末上の画面操作・音声操作は実施していません。SDK・設定・署名の識別は変更しません。
+
+## CPU・メモリ効率
+
+[変更内容と検証範囲](efficiency.md)を参照してください。
