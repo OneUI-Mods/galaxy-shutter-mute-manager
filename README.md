@@ -1,5 +1,7 @@
 # Galaxy Shutter Mute Manager
 
+[日本語](README.md) · [English](README.en.md)
+
 [Galaxy Shutter Mute](https://github.com/OneUI-Mods/galaxy-shutter-mute)の導入・更新と、必要な権限の付与を行うアプリです。
 
 ## 必要なもの
